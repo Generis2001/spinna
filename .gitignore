@@ -1,0 +1,21 @@
+# Environment-specific: extracted Chromium runtime libs (see README)
+.browserlibs/
+.locallibs/
+debs/
+
+# Third-party GenLayer design-system reference kit (incl. licensed fonts) —
+# not part of this deliverable; tokens are documented in the README instead.
+genlayer-design/
+portal.css
+portal_index.html
+
+# Node
+node_modules/
+
+# OS / misc
+.DS_Store
+*.log
+
+# Vercel
+.vercel/
+.vercel

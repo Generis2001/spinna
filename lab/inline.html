@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>GenLayer Spinner — inline SVG lab</title>
+<style>
+  :root {
+    --gl-pink: #E37DF7; --gl-purple: #9B6AF6; --gl-blue: #110FFF; --gl-violet: #7c5cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 13px/1.4 "Space Grotesk", system-ui, sans-serif; }
+  .theme { padding: 26px 24px 30px; }
+  .light { background: #ffffff; color: #131214; }
+  .dark  { background: #060606; color: #f5f5f5; }
+  h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .55; margin: 0 0 16px; font-weight: 600;}
+  .row { display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-end; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .cap { font-size: 11px; opacity: .6; }
+  .gls { display:block; }
+
+  /* base mark uses currentColor track */
+  .track { fill: currentColor; opacity: .16; }
+
+  /* ---- V1 flow-up: a vertical brand beam sweeps up through the mark ---- */
+  .v1 .beam { animation: v1 1.6s linear infinite; }
+  @keyframes v1 { from { transform: translateY(50%); } to { transform: translateY(-50%); } }
+  .v1 .gem { fill: var(--gl-violet); opacity:.9; }
+
+  /* ---- V2 consensus: two beams rise, gem pulses when they meet ---- */
+  .v2 .beam { animation: v2rise 1.8s cubic-bezier(.45,0,.55,1) infinite; }
+  @keyframes v2rise { from { transform: translateY(60%); } to { transform: translateY(-60%); } }
+  .v2 .gem { fill: url(#gemGrad); animation: v2gem 1.8s ease-in-out infinite; transform-origin:center; transform-box: fill-box; }
+  @keyframes v2gem { 0%,42% { opacity:.28; } 60% { opacity:1; } 82%,100% { opacity:.28; } }
+
+  /* ---- V3 conic sweep clipped to mark ---- */
+  .v3 .conicwrap { animation: v3 1.5s linear infinite; transform-origin: 50% 50%; transform-box: view-box; }
+  @keyframes v3 { to { transform: rotate(360deg); } }
+  .v3 .gem { fill: var(--gl-violet); opacity:.9; }
+
+  /* ---- V4 gem pulse minimal ---- */
+  .v4 .gem { fill: url(#gemGrad); animation: v4 1.7s ease-in-out infinite; transform-origin:center; transform-box: fill-box; }
+  @keyframes v4 { 0%,100% { opacity:.28; } 50% { opacity:1; } }
+</style>
+</head>
+<body>
+<script>
+const MARK = {
+  left:  "44.26 32.35 27.72 67.12 43.29 74.9 0 91.93 44.26 0",
+  right: "53.5 32.35 70.04 67.12 54.47 74.9 97.76 91.93 53.5 0",
+  gem:   "48.64 43.78 58.33 62.94 48.64 67.69 39.47 62.92",
+};
+// shared defs (gradients + clip)
+function defs(id) {
+  return `<defs>
+    <linearGradient id="beamGrad-${id}" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="var(--gl-pink)" stop-opacity="0"/>
+      <stop offset=".35" stop-color="var(--gl-pink)"/>
+      <stop offset=".5" stop-color="var(--gl-purple)"/>
+      <stop offset=".65" stop-color="var(--gl-blue)"/>
+      <stop offset="1" stop-color="var(--gl-blue)" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gemGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="var(--gl-pink)"/><stop offset=".5" stop-color="var(--gl-purple)"/><stop offset="1" stop-color="var(--gl-blue)"/>
+    </linearGradient>
+    <clipPath id="clipMark-${id}">
+      <polygon points="${MARK.left}"/><polygon points="${MARK.right}"/><polygon points="${MARK.gem}"/>
+    </clipPath>
+    <clipPath id="clipBlades-${id}">
+      <polygon points="${MARK.left}"/><polygon points="${MARK.right}"/>
+    </clipPath>
+    <conicGradient></conicGradient>
+  </defs>`;
+}
+function svg(variant, id, size) {
+  const S = `viewBox="0 0 97.76 91.93" width="${size}" height="${size}" class="gls"`;
+  const track = `<g clip-path="url(#clipMark-${id})"><rect class="track" x="0" y="0" width="97.76" height="91.93"/></g>`;
+  if (variant === 'v1') {
+    return `<svg ${S}>${defs(id)}
+      ${track}
+      <g clip-path="url(#clipMark-${id})">
+        <rect class="beam" x="0" y="-91.93" width="97.76" height="183.86" fill="url(#beamGrad-${id})"/>
+      </g>
+      <polygon class="gem" points="${MARK.gem}"/>
+    </svg>`;
+  }
+  if (variant === 'v2') {
+    return `<svg ${S}>${defs(id)}
+      ${track}
+      <g clip-path="url(#clipBlades-${id})">
+        <rect class="beam" x="0" y="-91.93" width="97.76" height="183.86" fill="url(#beamGrad-${id})"/>
+      </g>
+      <polygon class="gem" points="${MARK.gem}"/>
+    </svg>`;
+  }
+  if (variant === 'v3') {
+    // conic sweep via foreignObject div clipped by SVG clip
+    return `<svg ${S}>${defs(id)}
+      ${track}
+      <g clip-path="url(#clipMark-${id})">
+        <foreignObject x="0" y="0" width="97.76" height="91.93">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="conicwrap" style="width:97.76px;height:91.93px;background:conic-gradient(from 0deg, transparent 0deg 210deg, var(--gl-blue) 265deg, var(--gl-purple) 320deg, var(--gl-pink) 352deg, transparent 360deg)"></div>
+        </foreignObject>
+      </g>
+      <polygon class="gem" points="${MARK.gem}"/>
+    </svg>`;
+  }
+  if (variant === 'v4') {
+    return `<svg ${S}>${defs(id)}
+      <g clip-path="url(#clipBlades-${id})"><rect class="track" x="0" y="0" width="97.76" height="91.93"/></g>
+      <polygon class="gem" points="${MARK.gem}"/>
+    </svg>`;
+  }
+}
+const variants = [['v1','V1 · flow up'],['v2','V2 · consensus'],['v3','V3 · conic sweep'],['v4','V4 · gem pulse']];
+function theme(cls, title, size) {
+  let h = `<section class="theme ${cls}"><h2>${title}</h2><div class="row">`;
+  variants.forEach(([v,label],i) => {
+    h += `<div class="cell ${v}">${svg(v, cls+'-'+i, size)}<div class="cap">${label}</div></div>`;
+  });
+  return h + `</div></section>`;
+}
+document.body.innerHTML =
+  theme('light','Light · 64px',64) +
+  theme('dark','Dark · 64px',64);
+</script>
+</body>
+</html>

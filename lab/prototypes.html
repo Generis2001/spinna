@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>GenLayer Spinner — motion lab</title>
+<style>
+  :root {
+    /* brand tokens (from genlayer-design DESIGN.md §3) */
+    --gl-pink: #E37DF7;
+    --gl-purple: #9B6AF6;
+    --gl-blue: #110FFF;
+    --gl-violet: #7c5cff;
+    --gl-grad: linear-gradient(135deg, var(--gl-pink) 0%, var(--gl-purple) 45%, var(--gl-blue) 100%);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 13px/1.4 "Space Grotesk", system-ui, sans-serif; }
+  .theme { padding: 28px 24px 34px; }
+  .light { background: #ffffff; color: #131214; }
+  .dark  { background: #060606; color: #f5f5f5; }
+  h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .55; margin: 0 0 18px; font-weight: 600;}
+  .row { display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-end; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .cap { font-size: 11px; opacity: .6; }
+
+  /* ---------- shared spinner scaffold ---------- */
+  .gl { position: relative; width: var(--s, 64px); height: var(--s, 64px); display: inline-block; color: inherit; }
+  .gl .layer {
+    position: absolute; inset: 0;
+    -webkit-mask: var(--mask) center / contain no-repeat;
+            mask: var(--mask) center / contain no-repeat;
+  }
+  .gl .mark-full   { --mask: url(assets/mark-full.svg); }
+  .gl .mark-left   { --mask: url(assets/mark-left.svg); }
+  .gl .mark-right  { --mask: url(assets/mark-right.svg); }
+  .gl .mark-gem    { --mask: url(assets/mark-gem.svg); }
+  .gl .mark-blades { --mask: url(assets/mark-blades.svg); }
+
+  /* ================= V1 — FLOW UP (energy rising through the mark) ================= */
+  .v1 .track { background: currentColor; opacity: .15; }
+  .v1 .flow {
+    background: repeating-linear-gradient(180deg,
+        transparent 0, transparent 22%,
+        var(--gl-pink) 34%, var(--gl-purple) 42%, var(--gl-blue) 50%,
+        transparent 62%, transparent 100%);
+    background-size: 100% 220%;
+    animation: v1flow 1.6s linear infinite;
+  }
+  @keyframes v1flow { from { background-position: 0 100%; } to { background-position: 0 -120%; } }
+
+  /* ================= V2 — GRADIENT DRIFT (unidirectional brand flow) ================= */
+  .v2 .fill {
+    background: repeating-linear-gradient(150deg,
+        var(--gl-blue) 0%, var(--gl-purple) 12%, var(--gl-pink) 25%,
+        var(--gl-purple) 38%, var(--gl-blue) 50%);
+    background-size: 260% 260%;
+    animation: v2drift 2.2s linear infinite;
+  }
+  @keyframes v2drift { from { background-position: 0% 0%; } to { background-position: 130% 130%; } }
+
+  /* ================= V3 — CONIC SWEEP (adjudication scan) ================= */
+  .v3 .track { background: currentColor; opacity: .14; }
+  .v3 .sweep {
+    background: conic-gradient(from 0deg,
+       transparent 0deg, transparent 200deg,
+       var(--gl-blue) 260deg, var(--gl-purple) 315deg, var(--gl-pink) 350deg, transparent 360deg);
+    animation: v3spin 1.5s linear infinite;
+  }
+  @keyframes v3spin { to { transform: rotate(360deg); } }
+
+  /* ================= V4 — CONSENSUS (two blades converge → gem) ================= */
+  .v4 .track { background: currentColor; opacity: .14; }
+  .v4 .beamL, .v4 .beamR {
+    background: linear-gradient(180deg, transparent 0 40%, var(--gl-purple) 55%, var(--gl-pink) 70%, transparent 78% 100%);
+    background-size: 100% 240%;
+  }
+  .v4 .beamL { animation: v4rise 1.8s linear infinite; }
+  .v4 .beamR { animation: v4rise 1.8s linear infinite; }
+  @keyframes v4rise { from { background-position: 0 130%; } to { background-position: 0 -130%; } }
+  .v4 .gemcore { background: var(--gl-grad); opacity: .35; animation: v4gem 1.8s ease-in-out infinite; }
+  @keyframes v4gem { 0%,100% { opacity: .3; } 44% { opacity: .35; } 60% { opacity: 1; } 76% { opacity: .5; } }
+
+  /* ================= V5 — GEM PULSE (minimal) ================= */
+  .v5 .fill { background: currentColor; opacity: .18; }
+  .v5 .gemcore { background: var(--gl-grad); animation: v5pulse 1.7s ease-in-out infinite; }
+  @keyframes v5pulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+  <script>
+    // Render a given variant into a container at a given size.
+    function spinnerHTML(variant) {
+      const map = {
+        v1: '<div class="layer mark-full track"></div><div class="layer mark-full flow"></div>',
+        v2: '<div class="layer mark-full fill"></div>',
+        v3: '<div class="layer mark-full track"></div><div class="layer mark-full sweep"></div>',
+        v4: '<div class="layer mark-full track"></div><div class="layer mark-left beamL"></div><div class="layer mark-right beamR"></div><div class="layer mark-gem gemcore"></div>',
+        v5: '<div class="layer mark-blades fill"></div><div class="layer mark-gem gemcore"></div>',
+      };
+      return map[variant];
+    }
+    const variants = [
+      ['v1', 'V1 · flow up'],
+      ['v2', 'V2 · gradient drift'],
+      ['v3', 'V3 · conic sweep'],
+      ['v4', 'V4 · consensus'],
+      ['v5', 'V5 · gem pulse'],
+    ];
+    function buildTheme(cls, title) {
+      let h = `<section class="theme ${cls}"><h2>${title}</h2><div class="row">`;
+      for (const [v, label] of variants) {
+        h += `<div class="cell"><div class="gl ${v}" style="--s:64px">${spinnerHTML(v)}</div><div class="cap">${label}</div></div>`;
+      }
+      h += `</div></section>`;
+      return h;
+    }
+    document.body.innerHTML = buildTheme('light', 'Light · 64px') + buildTheme('dark', 'Dark · 64px');
+  </script>
+</body>
+</html>
